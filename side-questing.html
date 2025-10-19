@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome Dinosaur Game</title>
+    <style>
+        @font-face {
+    font-family: 'Pixel Game';
+    src: url('./font/Pixel_Game.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+body {
+    font-family: 'Pixel Game','Courier New', Courier, monospace;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+#welcome-screen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 750px;
+    height: 250px;
+    background-color: lightgray;
+    border-bottom: 1px solid black;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    overflow: hidden;
+}
+
+#welcome-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+#game-title {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Pixel Game';
+    font-size: 3.5rem;
+    color: #c8a2f0;
+    text-shadow: 
+        3px 3px 0 #6b3fa0,
+        -1px -1px 0 #6b3fa0,
+        1px -1px 0 #6b3fa0,
+        -1px 1px 0 #6b3fa0,
+        1px 1px 0 #6b3fa0;
+    margin: 0;
+    z-index: 2;
+}
+
+#button-container {
+    position: absolute;
+    bottom: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30%;
+    z-index: 2;
+}
+
+#start-button {
+    width: 100%;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+#start-button:hover {
+    transform: scale(1.05);
+}
+
+#game-container {
+    position: relative;
+    width: 750px;
+    height: 250px;
+}
+
+#board {
+    border-bottom: 1px solid black;
+    opacity: 1;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#level-display {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 1.2rem;
+    color: #333;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 5px 10px;
+    border-radius: 5px;
+    z-index: 2;
+}
+
+.level-transition {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5;
+    overflow: hidden;
+}
+
+.transition-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    opacity: 0;
+    transition: opacity 0.6s ease-in-out;
+}
+
+.transition-overlay.active {
+    opacity: 0.8;
+}
+
+.level-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2.5rem;
+    color: #6b3fa0;
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+    z-index: 6;
+}
+
+.level-text.active {
+    opacity: 1;
+}
+
+#jump-instruction-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 750px;
+    height: 250px;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 8;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease-in-out;
+}
+
+#jump-instruction-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+#jump-instruction-message {
+    color: white;
+    font-size: 30px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+#jump-instruction-subtitle {
+    color: white;
+    font-size: 20px;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+#continue-button {
+    background-color: #c8a2f0;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-family: 'Pixel Game', 'Courier New', Courier, monospace;
+    font-size: 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+#continue-button:hover {
+    background-color: #6b3fa0;
+    transform: scale(1.05);
+}
+
+.key-icon {
+    display: inline-block;
+    background-color: #333;
+    color: white;
+    padding: 5px 10px;
+    margin: 0 5px;
+    border-radius: 5px;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    border: 2px solid #555;
+    box-shadow: 0 3px 0 #222;
+}
+
+#level-cake {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    right: 20px;
+    bottom: 0;
+    display: none;
+    z-index: 3;
+}
+
+#win-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 9;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease-in-out;
+}
+
+#win-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.win-text {
+    color: white;
+    font-size: 2.5rem;
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+    margin-bottom: 20px;
+    text-align: center;
+    z-index: 10;
+}
+
+.win-subtitle {
+    color: white;
+    font-size: 1.5rem;
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5);
+    margin-bottom: 30px;
+    text-align: center;
+    z-index: 10;
+}
+
+#win-continue-button {
+    background-color: #c8a2f0;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-family: 'Pixel Game', 'Courier New', Courier, monospace;
+    font-size: 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    z-index: 10;
+}
+
+#win-continue-button:hover {
+    background-color: #6b3fa0;
+    transform: scale(1.05);
+}
+
+#video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 11;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease-in-out;
+}
+
+#video-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+#victory-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#skip-video-button {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background-color: rgba(200, 162, 240, 0.7);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    font-family: 'Pixel Game', 'Courier New', Courier, monospace;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    z-index: 12;
+}
+
+#skip-video-button:hover {
+    background-color: rgba(107, 63, 160, 0.9);
+    transform: scale(1.05);
+}
+    </style>
+</head>
+<body>
+    <div id="welcome-screen">
+        <img id="welcome-image" src="./img/home-page.png" alt="Welcome to Dinosaur Game">
+        <h1 id="game-title">SIDE QUESTING</h1>
+        <div id="button-container">
+            <img id="start-button" src="./img/start-button.png" alt="Start Game">
+        </div>
+    </div>
+    
+    <div id="game-container">
+        <canvas id="board"></canvas>
+        <div id="level-display" class="hidden">Level: 1</div>
+        
+    
+        <img id="level-cake" src="./img/cake.png" alt="Level Cake">
+        
+        
+        <div id="level-transition" class="level-transition">
+            <div id="transition-overlay" class="transition-overlay"></div>
+            <div id="level-text" class="level-text"></div>
+        </div>
+        
+       
+        <div id="video-overlay">
+            <video id="victory-video" preload="auto">
+                <source src="./sound/HB.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <button id="skip-video-button">Skip Video</button>
+        </div>
+        
+        
+        <div id="win-overlay">
+            <div class="win-text">You Win!</div>
+            <div class="win-subtitle">Congratulations! You completed all levels</div>
+            <button id="win-continue-button">Play Again</button>
+        </div>
+        
+        
+        <div id="jump-instruction-overlay">
+            <div id="jump-instruction-message">How to Play</div>
+            <div id="jump-instruction-subtitle">
+                Press <span class="key-icon">SPACE</span> or <span class="key-icon">↑</span> to jump
+            </div>
+            <button id="continue-button">Continue to Game</button>
+        </div>
+    </div>
+</body>
+<script>
+    // Game levels configuration
+const levels = [
+    {
+        name: "Level 1",
+        scoreThreshold: 0,
+        dinoImg: "./img/witcher.png",
+        cactus1Img: "./img/monster1.png",
+        cactus2Img: "./img/monster2.png",
+        cactus3Img: "./img/monster3.png",
+        backgroundImg: "./img/witcher3.jpg",
+        velocityX: -6,
+        backgroundScrollSpeed: 1.5,
+        backgroundMusic: "./sound/witcherlvl.wav"  
+    },
+    {
+        name: "Level 2",
+        scoreThreshold: 1000,
+        dinoImg: "./img/seth.png",
+        cactus1Img: "./img/cina.png",
+        cactus2Img: "./img/cina.png",
+        cactus3Img: "./img/cina.png",
+        backgroundImg: "./img/arena2.jpg",
+        velocityX: -6.5,
+        backgroundScrollSpeed: 1.7,
+        backgroundMusic: "./sound/sethlvl.wav"  
+    },
+    {
+        name: "Level 3",
+        scoreThreshold: 2000,
+        dinoImg: "./img/hiter.png",
+        cactus1Img: "./img/j1.png",
+        cactus2Img: "./img/j1.png",
+        cactus3Img: "./img/j1.png",
+        backgroundImg: "./img/original.jpg",
+        velocityX: -7,
+        backgroundScrollSpeed: 1.9,
+        backgroundMusic: "./sound/hittlvl.wav"  
+    }
+];
+
+// board
+let board;
+let boardWidth = 750;
+let boardHeight = 250;
+let context;
+
+//dino
+let dinoWidth = 80;
+let dinoHeight = 94;
+let dinoX = 50;
+let dinoY = boardHeight - dinoHeight;
+let dinoImg;
+
+let dino = {
+    x : dinoX,
+    y : dinoY,
+    width: dinoWidth,
+    height: dinoHeight
+}
+
+// background
+let backgroundImg;
+
+//cactus
+let cactusArray = [];
+
+let cactus1Width = 70;
+let cactus2Width = 70;
+let cactus3Width = 70;
+
+let cactusHeight = 70;
+let cactusX = 700;
+let cactusY = boardHeight - cactusHeight;
+
+let cactus1Img;
+let cactus2Img;
+let cactus3Img;
+
+//physics
+let velocityX = -6;
+let velocityY = 0; 
+let gravity = .4;
+
+let gameOver = false;
+let score = 0;
+let currentLevel = 0;
+
+// Game state
+let gameStarted = false;
+let isTransitioning = false;
+let showJumpInstructions = false;
+let levelCompleted = false;
+let movingToFlag = false;
+
+let backgroundX = 0;
+let backgroundScrollSpeed = 1.5;
+
+// last speed increase to prevent frequent updates
+let lastSpeedIncrease = 0;
+let speedIncreaseInterval = 600;
+
+// speed limits
+const MAX_VELOCITY_X = -7.5;
+const MAX_BACKGROUND_SPEED = 2;
+
+const levelTransition = document.getElementById("level-transition");
+const transitionOverlay = document.getElementById("transition-overlay");
+const levelText = document.getElementById("level-text");
+
+
+const winOverlay = document.getElementById("win-overlay");
+
+const videoOverlay = document.getElementById("video-overlay");
+const victoryVideo = document.getElementById("victory-video");
+const skipVideoButton = document.getElementById("skip-video-button");
+
+const jumpInstructionOverlay = document.getElementById("jump-instruction-overlay");
+const continueButton = document.getElementById("continue-button");
+
+const levelCake = document.getElementById("level-cake");
+
+let lastCactusTime = 0;
+let cactusCooldown = 2000;
+let minCactusDistance = 300;
+
+// jump sound and background music
+let jumpSound;
+let victorySound;
+let backgroundMusic; 
+
+window.onload = function () {
+    // Initialize welcome screen
+    const welcomeScreen = document.getElementById("welcome-screen");
+    const startButton = document.getElementById("start-button");
+    
+    startButton.addEventListener("click", showJumpInstructionsScreen);
+    
+    board = document.getElementById("board");
+    board.height = boardHeight;
+    board.width = boardWidth;
+
+    context = board.getContext("2d");
+
+    loadLevelAssets(currentLevel);
+
+    jumpSound = new Audio("./sound/jump.wav");
+    victorySound = new Audio("./sound/victory.wav");
+
+    continueButton.addEventListener("click", startGame);
+    
+
+    const winContinueButton = document.getElementById("win-continue-button");
+    winContinueButton.addEventListener("click", restartGame);
+    
+    skipVideoButton.addEventListener("click", skipVideo);
+    
+    victoryVideo.addEventListener("ended", showWinOverlay);
+}
+
+function showJumpInstructionsScreen() {
+   
+    document.getElementById("welcome-screen").classList.add("hidden");
+    
+    jumpInstructionOverlay.classList.add("active");
+    showJumpInstructions = true;
+}
+
+function loadLevelAssets(levelIndex) {
+    const level = levels[levelIndex];
+    
+    const levelDisplay = document.getElementById("level-display");
+    levelDisplay.textContent = `Level: ${levelIndex + 1}`;
+    
+
+    dinoImg = new Image();
+    dinoImg.src = level.dinoImg;
+
+    cactus1Img = new Image();
+    cactus1Img.src = level.cactus1Img;
+
+    cactus2Img = new Image();
+    cactus2Img.src = level.cactus2Img;
+
+    cactus3Img = new Image();
+    cactus3Img.src = level.cactus3Img;
+
+    backgroundImg = new Image();
+    backgroundImg.src = level.backgroundImg;
+
+    velocityX = level.velocityX;
+    backgroundScrollSpeed = level.backgroundScrollSpeed;
+    
+    lastSpeedIncrease = score;
+    
+    if (levelIndex === 0) {
+        minCactusDistance = 300;
+    } else if (levelIndex === 1) {
+        minCactusDistance = 250;
+    } else {
+        minCactusDistance = 200;
+    }
+    
+    playBackgroundMusic(level.backgroundMusic);
+    
+
+    levelCompleted = false;
+    movingToFlag = false;
+    levelCake.style.display = "none";
+}
+
+function playBackgroundMusic(musicPath) {
+    
+    if (backgroundMusic) {
+        backgroundMusic.pause();
+        backgroundMusic.currentTime = 0;
+    }
+    
+    backgroundMusic = new Audio(musicPath);
+    backgroundMusic.loop = true; 
+    backgroundMusic.volume = 0.5; 
+    
+    if (gameStarted && !gameOver) {
+        backgroundMusic.play().catch(e => {
+            console.log("Audio play failed:", e);
+        });
+    }
+}
+
+function updateGameSpeed() {
+    if (score - lastSpeedIncrease >= speedIncreaseInterval && velocityX > MAX_VELOCITY_X) {
+        velocityX -= 0.05;
+        
+        if (velocityX < MAX_VELOCITY_X) {
+            velocityX = MAX_VELOCITY_X;
+        }
+        
+        if (backgroundScrollSpeed < MAX_BACKGROUND_SPEED) {
+            backgroundScrollSpeed += 0.02;
+        }
+        
+        lastSpeedIncrease = score;
+    }
+}
+
+function checkLevelUp() {
+    const nextLevel = currentLevel + 1;
+    
+    if (nextLevel < levels.length && score >= levels[nextLevel].scoreThreshold) {
+        // Start level completion sequence
+        completeLevel(nextLevel);
+        return true;
+    }
+    
+    if (score >= 3000) {
+        completeLevel("win");
+        return true;
+    }
+    
+    return false;
+}
+
+function completeLevel(nextLevel) {
+    levelCompleted = true;
+    
+    levelCake.style.display = "block";
+    
+    if (backgroundMusic) {
+        backgroundMusic.pause();
+    }
+    
+    if (victorySound) {
+        victorySound.currentTime = 0;
+        victorySound.play();
+    }   
+    
+    cactusArray = [];
+    
+    movingToFlag = true;
+    
+    const moveInterval = setInterval(() => {
+        if (dino.x < boardWidth - dino.width - 60) {
+            dino.x += 5;
+        } else {
+            clearInterval(moveInterval);
+            
+            setTimeout(() => {
+                if (nextLevel === "win") {
+                    showVictoryVideo();
+                } else {
+                    startLevelTransition(nextLevel);
+                }
+            }, 500);
+        }
+    }, 30);
+}
+
+function showVictoryVideo() {
+    isTransitioning = true;
+    
+    videoOverlay.classList.add("active");
+    
+    // Play the video
+    victoryVideo.currentTime = 0;
+    victoryVideo.play().catch(e => {
+        console.log("Video play failed:", e);
+        showWinOverlay();
+    });
+}
+
+function skipVideo() {
+    victoryVideo.pause();
+    showWinOverlay();
+}
+
+function showWinOverlay() {
+    videoOverlay.classList.remove("active");
+    
+    winOverlay.classList.add("active");
+}
+
+function startLevelTransition(nextLevel) {
+    isTransitioning = true;
+    
+    levelText.textContent = levels[nextLevel].name;
+    
+    transitionOverlay.classList.add("active");
+    
+    setTimeout(() => {
+        levelText.classList.add("active");
+    }, 300);
+    
+    setTimeout(() => {
+        currentLevel = nextLevel;
+        loadLevelAssets(currentLevel);
+        
+        dino.x = dinoX;
+        dino.y = dinoY;
+        velocityY = 0;
+        
+        levelText.classList.remove("active");
+        
+        setTimeout(() => {
+            transitionOverlay.classList.remove("active");
+            
+            setTimeout(() => {
+                isTransitioning = false;
+                levelCompleted = false;
+                movingToFlag = false;
+                
+                if (!gameOver) {
+                    requestAnimationFrame(update);
+                }
+            }, 100);
+        }, 500);
+    }, 1500);
+}
+
+function startGame() {
+    gameStarted = true;
+    showJumpInstructions = false;
+    
+    jumpInstructionOverlay.classList.remove("active");
+    
+    document.getElementById("level-display").classList.remove("hidden");
+    
+    if (backgroundMusic) {
+        backgroundMusic.play().catch(e => {
+            console.log("Audio play failed:", e);
+        });
+    }
+    
+    requestAnimationFrame(update);
+    setInterval(placeCactus, 1000);
+    document.addEventListener("keydown", moveDino);
+}
+
+function update() {
+    if (!gameStarted || gameOver || isTransitioning) {
+        return;
+    }
+    
+    requestAnimationFrame(update);
+    
+    context.clearRect(0, 0, board.width, board.height);
+
+    if (!levelCompleted && checkLevelUp()) {
+        return;
+    }
+
+    if (!levelCompleted) {
+        updateGameSpeed();
+    }
+
+    if (typeof backgroundImg !== 'undefined') {
+        let backgroundRepeats = Math.ceil(boardWidth / backgroundImg.width) + 2;
+        
+        for (let i = 0; i < backgroundRepeats; i++) {
+            context.drawImage(
+                backgroundImg, 
+                (i * backgroundImg.width) + backgroundX, 
+                0, 
+                backgroundImg.width, 
+                boardHeight
+            );
+        }
+        
+        if (!levelCompleted) {
+            backgroundX -= backgroundScrollSpeed;
+        }
+        
+        if (backgroundX <= -backgroundImg.width) {
+            backgroundX += backgroundImg.width;
+        }
+    }
+
+    //dino
+    if (!movingToFlag) {
+        velocityY += gravity;
+        dino.y = Math.min(dino.y + velocityY, dinoY);
+    }
+    context.drawImage(dinoImg, dino.x, dino.y, dino.width, dino.height);
+
+    if (!isTransitioning && !levelCompleted) {
+        for (let i = 0; i < cactusArray.length; i++){
+            let cactus = cactusArray[i];
+            cactus.x += velocityX;
+            context.drawImage(cactus.img, cactus.x, cactus.y, cactus.width, cactus.height);
+
+            if (detectCollision(dino, cactus)) {
+                gameOver = true;
+                
+                if (backgroundMusic) {
+                    backgroundMusic.pause();
+                }
+                
+                context.fillStyle = "rgba(0, 0, 0, 0.7)";
+                context.fillRect(0, 0, board.width, board.height);
+                
+                context.fillStyle = "white";
+                context.font = "30px courier";
+                context.fillText("Game Over!", boardWidth/2 - 100, boardHeight/2 - 20);
+                context.font = "20px courier";
+                context.fillText("Final Score: " + score, boardWidth/2 - 80, boardHeight/2 + 20);
+                context.fillText("Click to restart", boardWidth/2 - 80, boardHeight/2 + 50);
+                
+                board.addEventListener("click", restartGame);
+            }
+        }
+    }
+
+    //score
+    context.fillStyle = "black";
+    context.font = "20px courier";
+    if (!levelCompleted) {
+        score++; 
+    }
+    context.fillText(score, 5, 20);
+}
+
+function moveDino(e) {
+    if (!gameStarted || gameOver || isTransitioning || levelCompleted) {
+        return;
+    }
+
+    if ((e.code == "Space" || e.code == "ArrowUp") && dino.y == dinoY) {
+        //jump
+        velocityY = -10;
+        
+        if (jumpSound) {
+            jumpSound.currentTime = 0;
+            jumpSound.play();
+        }
+    }
+}
+
+function placeCactus() {
+    if (!gameStarted || gameOver || isTransitioning || levelCompleted) {
+        return;
+    }
+
+    const currentTime = Date.now();
+    if (currentTime - lastCactusTime < cactusCooldown) {
+        return;
+    }
+
+    if (cactusArray.length > 0) {
+        const lastCactus = cactusArray[cactusArray.length - 1];
+        if (lastCactus.x > boardWidth - minCactusDistance) {
+            return;
+        }
+    }
+
+    let cactus = {
+        img: null,
+        x: cactusX,
+        y: cactusY,
+        width: null,
+        height: cactusHeight
+    }
+
+    let placeCactusChance = Math.random();
+
+    if (placeCactusChance > .90) {
+        cactus.img = cactus3Img;
+        cactus.width = cactus3Width;
+        cactusArray.push(cactus);
+    }
+    else if (placeCactusChance > 0.70) {
+        cactus.img = cactus2Img;
+        cactus.width = cactus2Width;
+        cactusArray.push(cactus);
+    }
+    else if (placeCactusChance > .50) {
+        cactus.img = cactus1Img;
+        cactus.width = cactus1Width;
+        cactusArray.push(cactus);
+    }
+
+    if (cactus.img) {
+        lastCactusTime = currentTime;
+    }
+
+    if (cactusArray.length > 5) {
+        cactusArray.shift();
+    }
+}
+
+function detectCollision(a, b) {
+    return a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y;
+}
+
+function restartGame() {
+    gameOver = false;
+    gameStarted = true;
+    score = 0;
+    currentLevel = 0;
+    cactusArray = [];
+    dino.y = dinoY;
+    dino.x = dinoX;
+    velocityY = 0;
+    isTransitioning = false;
+    levelCompleted = false;
+    movingToFlag = false;
+    
+    velocityX = levels[0].velocityX;
+    backgroundScrollSpeed = levels[0].backgroundScrollSpeed;
+    lastSpeedIncrease = 0;
+    
+    lastCactusTime = 0;
+    
+    transitionOverlay.classList.remove("active");
+    levelText.classList.remove("active");
+    
+    winOverlay.classList.remove("active");
+    
+
+    videoOverlay.classList.remove("active");
+    victoryVideo.pause();
+    
+    levelCake.style.display = "none";
+    
+    board.removeEventListener("click", restartGame);
+    
+    loadLevelAssets(currentLevel);
+    
+    requestAnimationFrame(update);
+}
+</script>
+</html>
